@@ -1,4 +1,10 @@
-FROM ubuntu:20.04
+FROM ubuntu:21.10
+
+ARG LIB_DIR="/usr/lib"
+ARG JVM_DIR=${LIB_DIR}"/jvm"
+ARG KOTLIN_DIR_COMMON=${LIB_DIR}"/kotlin"
+ARG KOTLIN_DIR=${KOTLIN_DIR_COMMON}"/kotlinc"
+ARG KTLINT_DIR=${KOTLIN_DIR_COMMON}"/lint"
 
 RUN apt-get update \
     && apt-get install -y apt-utils sudo wget -f \
@@ -13,26 +19,31 @@ USER user
 
 WORKDIR /home/user
 
-RUN sudo apt-get install -y curl unzip zsh
+RUN sudo apt-get install -y curl unzip zsh gradle
 
 SHELL ["/bin/zsh", "-c"]
 
+RUN [ ! -d ${JVM_DIR} ] && sudo mkdir ${JVM_DIR} || exit 0
+RUN [ ! -d ${KOTLIN_DIR_COMMON} ] && sudo mkdir ${KOTLIN_DIR_COMMON} || exit 0
+RUN [ ! -d ${KOTLIN_DIR} ] && sudo mkdir ${KOTLIN_DIR} || exit 0
+RUN [ ! -d ${KTLINT_DIR} ] && sudo mkdir ${KTLINT_DIR} || exit 0
+
 RUN wget https://download.java.net/java/GA/jdk17.0.2/dfd4a8d0985749f896bed50d7138ee7f/8/GPL/openjdk-17.0.2_linux-x64_bin.tar.gz \
     && tar xvf openjdk-17.0.2_linux-x64_bin.tar.gz \
-    && sudo mkdir /usr/lib/jvm/ \
-    && sudo mv jdk-17.0.2 /usr/lib/jvm/
+    && sudo mv jdk-17.0.2 ${JVM_DIR}
 
 RUN wget https://github.com/JetBrains/kotlin/releases/download/v1.6.10/kotlin-compiler-1.6.10.zip \
     && unzip kotlin-compiler-1.6.10.zip \
-    && sudo mv kotlinc /usr/lib/
+    && sudo mv kotlinc ${KOTLIN_DIR_COMMON}
 
-# RUN echo "export JAVA_HOME=/usr/lib/jvm/jdk-17.0.2" >> ~/.bashrc
-# RUN echo "export PATH=$PATH:$JAVA_HOME/bin" >> ~/.bashrc 
-# RUN echo "export PATH=$PATH:/usr/lib/kotlinc/bin" >> ~/.bashrc
+RUN wget https://github.com/pinterest/ktlint/releases/download/0.45.1/ktlint \
+    && chmod a+x ktlint
 
-ENV JAVA_HOME=/usr/lib/jvm/jdk-17.0.2
-ENV PATH=$PATH:$JAVA_HOME/bin
-ENV PATH=$PATH:/usr/lib/kotlinc/bin
+RUN sudo mv ktlint ${KTLINT_DIR}
+
+ENV JAVA_HOME=${JVM_DIR}"/jdk-17.0.2"
+ENV PATH=$JAVA_HOME/bin:$PATH
+ENV PATH=$PATH:${KOTLIN_DIR}"/bin":${KTLINT_DIR}
 
 VOLUME [ "data" ]
 
