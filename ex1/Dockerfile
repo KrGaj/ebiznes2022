@@ -1,4 +1,4 @@
-FROM ubuntu:21.10
+FROM ubuntu:22.04
 
 ARG LIB_DIR="/usr/lib"
 ARG JVM_DIR=${LIB_DIR}"/jvm"
@@ -7,10 +7,9 @@ ARG KOTLIN_DIR=${KOTLIN_DIR_COMMON}"/kotlinc"
 ARG KTLINT_DIR=${KOTLIN_DIR_COMMON}"/lint"
 
 RUN apt-get update \
-    && apt-get install -y apt-utils sudo wget -f \
-    && echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections \
+    && apt-get install -y apt-utils sudo wget -f
+RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections \
     && apt-get upgrade -y \
-    && apt-get install -y sudo wget -f \
     && apt-get dist-upgrade -y
 RUN useradd -m user \
     && usermod -aG sudo user \
